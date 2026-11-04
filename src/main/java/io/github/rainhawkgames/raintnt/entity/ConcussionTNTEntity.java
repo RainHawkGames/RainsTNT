@@ -32,7 +32,7 @@ public class ConcussionTNTEntity extends PrimedTnt {
         Level level = this.level();
         if (level.isClientSide()) return;
 
-        float explosionPower = 6.0f;
+        float explosionPower = 4.0f;
 
         // 1. Play sound and spawn particles
         level.playSound(
