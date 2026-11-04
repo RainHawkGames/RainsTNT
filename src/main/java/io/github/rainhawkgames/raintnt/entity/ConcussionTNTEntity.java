@@ -50,6 +50,7 @@ public class ConcussionTNTEntity extends PrimedTnt {
                 3.0F,
                 0.6F
         );
+
         if (level instanceof ServerLevel serverLevel) {
             // Big vanilla explosion flash/emitter effect
             serverLevel.sendParticles(
@@ -58,42 +59,35 @@ public class ConcussionTNTEntity extends PrimedTnt {
                     1, 0.0, 0.0, 0.0, 0.0
             );
 
-            // Expanding cloud of poof/smoke particles to simulate the shockwave burst
+            // Expanding cloud of smoke particles to simulate the shockwave burst
             serverLevel.sendParticles(
                     ParticleTypes.POOF,
                     this.getX(), this.getY() + 0.5D, this.getZ(),
                     35, 1.8D, 0.5D, 1.8D, 0.15D
             );
         }
-        // AABB search to push entities away with zero block damage or health damage
-        AABB searchBox = new AABB(
-                explosionPos.x - radius, explosionPos.y - radius, explosionPos.z - radius,
-                explosionPos.x + radius, explosionPos.y + radius, explosionPos.z + radius
-        );
 
-        for (Entity entity : level.getEntitiesOfClass(Entity.class, searchBox)) {
-            // Don't push self
-            if (entity == this) continue;
-
-            double distanceSqr = entity.distanceToSqr(explosionPos);
-
-            if (distanceSqr < radius * radius && distanceSqr > 0.0001D) {
-                double distance = Math.sqrt(distanceSqr);
-                double distanceFactor = 1.0D - (distance / radius);
-
-                Vec3 knockbackDir = entity.position().subtract(explosionPos).normalize();
-
-                // Apply velocity push to any entity caught in the blast
-                entity.setDeltaMovement(entity.getDeltaMovement().add(
-                        knockbackDir.x * distanceFactor * 2.5D,
-                        Math.abs(knockbackDir.y) * distanceFactor * 1.2D + 0.3D,
-                        knockbackDir.z * distanceFactor * 2.5D
-                ));
-                entity.hurtMarked = true; // Sync velocity packet to client
-            }
+        // Trigger the non-destructive explosion with proper shooter attribution for Sable physics
+        Entity shooter = this.getOwner();
+        net.minecraft.world.damagesource.DamageSource damageSource;
+        if (shooter instanceof LivingEntity livingShooter) {
+            damageSource = level.damageSources().explosion(this, livingShooter);
+        } else {
+            damageSource = level.damageSources().explosion(this, null);
         }
 
-        // Remove the concussion TNT entity from the world since it doesn't call level.explode()
+        level.explode(
+                this,                           // direct entity
+                damageSource,                   // custom damage source with shooter attribution
+                null,                           // explosion damage calculator
+                this.getX(), this.getY(), this.getZ(),
+                4.0f,                           // explosion power / radius
+                false,                          // creates fire
+                Level.ExplosionInteraction.NONE // prevents breaking blocks while preserving force and ragdolls
+        );
+
+        // Remove the concussion entity from the world once triggered
         this.discard();
     }
 }
+
