@@ -1,6 +1,7 @@
 package io.github.rainhawkgames.raintnt.event;
 
 import io.github.rainhawkgames.raintnt.ModRegistry;
+import io.github.rainhawkgames.raintnt.entity.ConcussionTNTEntity;
 import io.github.rainhawkgames.raintnt.entity.HETNTEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,45 +22,58 @@ public class ExplosionEventHandler {
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
         Entity source = event.getExplosion().getDirectSourceEntity();
 
+        // 1. Handle HE TNT (High Damage)
         if (source instanceof HETNTEntity hetnt) {
             event.getAffectedEntities().clear();
 
             double damageRadius = 10.0;
             float maxDamage = 80.0f;
 
-            AABB searchBox = hetnt.getBoundingBox().inflate(damageRadius);
-            List<LivingEntity> nearbyEntities = hetnt.level().getEntitiesOfClass(
-                    LivingEntity.class,
-                    searchBox,
-                    entity -> entity.distanceToSqr(hetnt) <= damageRadius * damageRadius
-            );
+            applyCustomExplosionDamage(hetnt, damageRadius, maxDamage);
+        }
+        // 2. Handle Concussion TNT (Zero Damage for pure Sable physics)
+        else if (source instanceof ConcussionTNTEntity concussion) {
+            event.getAffectedEntities().clear();
 
-            Vec3 explosionPos = hetnt.position().add(0.0, 0.0625D, 0.0);
+            double damageRadius = 8.0;
+            float maxDamage = 0.0f; // Guarantees zero health loss while preserving Sable triggers
 
-            for (LivingEntity living : nearbyEntities) {
-                Vec3 entityEyesPos = living.getEyePosition();
+            applyCustomExplosionDamage(concussion, damageRadius, maxDamage);
+        }
+    }
 
-                // Check line of sight
-                var rayTrace = hetnt.level().clip(new ClipContext(
-                        explosionPos,
-                        entityEyesPos,
-                        ClipContext.Block.COLLIDER,
-                        ClipContext.Fluid.NONE,
-                        hetnt
-                ));
+    private static void applyCustomExplosionDamage(Entity tntSource, double damageRadius, float maxDamage) {
+        AABB searchBox = tntSource.getBoundingBox().inflate(damageRadius);
+        List<LivingEntity> nearbyEntities = tntSource.level().getEntitiesOfClass(
+                LivingEntity.class,
+                searchBox,
+                entity -> entity.distanceToSqr(tntSource) <= damageRadius * damageRadius
+        );
 
-                double distance = living.distanceTo(hetnt);
-                float damage = (float) (maxDamage * (1.0 - (distance / damageRadius)));
+        Vec3 explosionPos = tntSource.position().add(0.0, 0.0625D, 0.0);
 
-                // If a block is in the way, reduce the damage significantly (e.g., to 30% of normal)
-                // instead of completely zeroing it out. You can adjust this mitigation multiplier!
-                if (rayTrace.getType() == HitResult.Type.BLOCK) {
-                    damage *= 0.3f;
-                }
+        for (LivingEntity living : nearbyEntities) {
+            Vec3 entityEyesPos = living.getEyePosition();
 
-                if (damage > 0.5f) {
-                    living.hurt(hetnt.level().damageSources().explosion(hetnt, hetnt), damage);
-                }
+            // Line of sight check
+            var rayTrace = tntSource.level().clip(new ClipContext(
+                    explosionPos,
+                    entityEyesPos,
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    tntSource
+            ));
+
+            double distance = living.distanceTo(tntSource);
+            float damage = (float) (maxDamage * (1.0D - (distance / damageRadius)));
+
+            if (rayTrace.getType() == HitResult.Type.BLOCK) {
+                damage *= 0.3f;
+            }
+
+            // Always fire hurt for Concussion TNT (0.0f) to trigger Sable, or if HE TNT damage > 0.5f
+            if (maxDamage == 0.0f || damage > 0.5f) {
+                living.hurt(tntSource.level().damageSources().explosion(tntSource, tntSource), damage);
             }
         }
     }

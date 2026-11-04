@@ -2,9 +2,8 @@ package io.github.rainhawkgames.raintnt.entity;
 
 import io.github.rainhawkgames.raintnt.ModRegistry;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -25,7 +24,6 @@ public class ConcussionTNTEntity extends PrimedTnt {
         double d0 = level.random.nextDouble() * 6.2831854820251465D;
         this.setDeltaMovement(-Math.sin(d0) * 0.02D, 0.20000000298023224D, -Math.cos(d0) * 0.02D);
         this.setFuse(40);
-
         this.setBlockState(ModRegistry.CONCUSSION_TNT_BLOCK.get().defaultBlockState());
     }
 
@@ -34,10 +32,9 @@ public class ConcussionTNTEntity extends PrimedTnt {
         Level level = this.level();
         if (level.isClientSide()) return;
 
-        Vec3 explosionPos = this.position();
-        double radius = 6.0D; // Adjust concussion blast radius here
+        float explosionPower = 6.0f;
 
-        // Play an explosion/boom sound without breaking blocks
+        // 1. Play sound and spawn particles
         level.playSound(
                 null,
                 this.getX(),
@@ -52,14 +49,12 @@ public class ConcussionTNTEntity extends PrimedTnt {
         );
 
         if (level instanceof ServerLevel serverLevel) {
-            // Big vanilla explosion flash/emitter effect
             serverLevel.sendParticles(
                     ParticleTypes.EXPLOSION_EMITTER,
                     this.getX(), this.getY(), this.getZ(),
                     1, 0.0, 0.0, 0.0, 0.0
             );
 
-            // Expanding cloud of smoke particles to simulate the shockwave burst
             serverLevel.sendParticles(
                     ParticleTypes.POOF,
                     this.getX(), this.getY() + 0.5D, this.getZ(),
@@ -67,27 +62,45 @@ public class ConcussionTNTEntity extends PrimedTnt {
             );
         }
 
-        // Trigger the non-destructive explosion with proper shooter attribution for Sable physics
-        Entity shooter = this.getOwner();
-        net.minecraft.world.damagesource.DamageSource damageSource;
-        if (shooter instanceof LivingEntity livingShooter) {
-            damageSource = level.damageSources().explosion(this, livingShooter);
-        } else {
-            damageSource = level.damageSources().explosion(this, null);
-        }
-
+        // 2. Trigger native explosion event so Sable detects it
         level.explode(
-                this,                           // direct entity
-                damageSource,                   // custom damage source with shooter attribution
-                null,                           // explosion damage calculator
-                this.getX(), this.getY(), this.getZ(),
-                4.0f,                           // explosion power / radius
-                false,                          // creates fire
-                Level.ExplosionInteraction.NONE // prevents breaking blocks while preserving force and ragdolls
+                this,
+                this.getX(),
+                this.getY(0.0625D),
+                this.getZ(),
+                explosionPower,
+                false,
+                Level.ExplosionInteraction.NONE
         );
 
-        // Remove the concussion entity from the world once triggered
+        // 3. Custom physical velocity push for entities and items
+        Vec3 explosionPos = this.position();
+        double radius = explosionPower * 2.5D;
+        AABB searchBox = new AABB(
+                explosionPos.x - radius, explosionPos.y - radius, explosionPos.z - radius,
+                explosionPos.x + radius, explosionPos.y + radius, explosionPos.z + radius
+        );
+
+        for (Entity entity : level.getEntitiesOfClass(Entity.class, searchBox)) {
+            if (entity == this) continue;
+
+            double distanceSqr = entity.distanceToSqr(explosionPos);
+
+            if (distanceSqr < radius * radius && distanceSqr > 0.0001D) {
+                double distance = Math.sqrt(distanceSqr);
+                double distanceFactor = 1.0D - (distance / radius);
+
+                Vec3 knockbackDir = entity.position().subtract(explosionPos).normalize();
+
+                entity.setDeltaMovement(entity.getDeltaMovement().add(
+                        knockbackDir.x * distanceFactor * 3.0D,
+                        Math.abs(knockbackDir.y) * distanceFactor * 1.5D + 0.4D,
+                        knockbackDir.z * distanceFactor * 3.0D
+                ));
+                entity.hurtMarked = true;
+            }
+        }
+
         this.discard();
     }
 }
-
