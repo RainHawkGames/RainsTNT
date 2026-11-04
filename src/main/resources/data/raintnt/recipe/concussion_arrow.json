@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "minecraft:arrow"
+    },
+    {
+      "item": "minecraft:slime_ball"
+    },
+    {
+      "item": "raintnt:concussion_tnt"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "raintnt:concussion_arrow"
+  }
+}

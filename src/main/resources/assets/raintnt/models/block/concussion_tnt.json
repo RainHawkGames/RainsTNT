@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "raintnt:block/concussion_tnt_side",
+    "down": "raintnt:block/concussion_tnt_bottom",
+    "up": "raintnt:block/concussion_tnt_top",
+    "north": "raintnt:block/concussion_tnt_side",
+    "south": "raintnt:block/concussion_tnt_side",
+    "east": "raintnt:block/concussion_tnt_side",
+    "west": "raintnt:block/concussion_tnt_side"
+  }
+}

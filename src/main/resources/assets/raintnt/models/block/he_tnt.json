@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "raintnt:block/he_tnt_side",
+    "down": "raintnt:block/he_tnt_bottom",
+    "up": "raintnt:block/he_tnt_top",
+    "north": "raintnt:block/he_tnt_side",
+    "south": "raintnt:block/he_tnt_side",
+    "east": "raintnt:block/he_tnt_side",
+    "west": "raintnt:block/he_tnt_side"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "block.raintnt.he_tnt": "High-Explosive TNT",
+  "item.raintnt.he_tnt": "High-Explosive TNT",
+  "item.raintnt.explosive_arrow":"Explosive Arrow",
+  "item.raintnt.high_explosive_arrow":"High Explosive Arrow",
+  "item.raintnt.concussion_arrow":"Concussive Arrow",
+  "block.raintnt.concussion_tnt": "Concussion TNT",
+  "item.raintnt.concussion_tnt": "Concussion TNT",
+  "creativetab.raintnt.tab": "Rain TNT",
+  "raintnt.configuration.title": "Rain'sTNT Configs",
+  "raintnt.configuration.section.raintnt.common.toml": "Rain'sTNT Configs",
+  "raintnt.configuration.section.raintnt.common.toml.title": "Rain'sTNT Configs",
+  "raintnt.configuration.items": "Item List",
+  "raintnt.configuration.logDirtBlock": "Log Dirt Block",
+  "raintnt.configuration.magicNumberIntroduction": "Magic Number Text",
+  "raintnt.configuration.magicNumber": "Magic Number"
+}
