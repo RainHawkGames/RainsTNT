@@ -8,6 +8,7 @@ import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
+import javax.annotation.Nullable;
 
 public class ExplosiveArrowEntity extends Arrow {
 
@@ -21,6 +22,15 @@ public class ExplosiveArrowEntity extends Arrow {
         this.setOwner(shooter);
     }
 
+    // --- ADDED CONSTRUCTOR FOR DISPENSERS ---
+    public ExplosiveArrowEntity(Level level, double x, double y, double z, ItemStack pickupItemStack, @Nullable ItemStack firedFromWeapon) {
+        super(ModRegistry.EXPLOSIVE_ARROW_ENTITY.get(), level);
+        this.setPos(x, y, z);
+        if (pickupItemStack != null && !pickupItemStack.isEmpty()) {
+            this.setPickupItemStack(pickupItemStack);
+        }
+    }
+
     @Override
     protected void onHit(HitResult result) {
         super.onHit(result);
@@ -29,9 +39,11 @@ public class ExplosiveArrowEntity extends Arrow {
         if (!level.isClientSide()) {
             // Spawn HE TNT with a 0 fuse for instant explosion
             PrimedTnt tnt = EntityType.TNT.create(level);
-            tnt.setPos(this.getX(), this.getY(), this.getZ());
-            tnt.setFuse(0);
-            level.addFreshEntity(tnt);
+            if (tnt != null) {
+                tnt.setPos(this.getX(), this.getY(), this.getZ());
+                tnt.setFuse(0);
+                level.addFreshEntity(tnt);
+            }
 
             // Remove the arrow on impact
             this.discard();

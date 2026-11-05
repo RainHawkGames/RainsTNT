@@ -8,6 +8,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 
+import javax.annotation.Nullable;
+
 public class ConcussionArrowEntity extends Arrow {
 
     public ConcussionArrowEntity(EntityType<? extends Arrow> entityType, Level level) {
@@ -18,6 +20,14 @@ public class ConcussionArrowEntity extends Arrow {
         super(entityType, level);
         this.setPos(shooter.getX(), shooter.getY() + (double) shooter.getEyeHeight() - 0.1, shooter.getZ());
         this.setOwner(shooter);
+    }
+
+    public ConcussionArrowEntity(Level level, double x, double y, double z, ItemStack pickupItemStack, @Nullable ItemStack firedFromWeapon) {
+        super(ModRegistry.CONCUSSION_ARROW_ENTITY.get(), level);
+        this.setPos(x, y, z);
+        if (pickupItemStack != null && !pickupItemStack.isEmpty()) {
+            this.setPickupItemStack(pickupItemStack);
+        }
     }
 
     @Override

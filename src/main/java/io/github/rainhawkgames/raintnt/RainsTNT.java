@@ -1,5 +1,7 @@
 package io.github.rainhawkgames.raintnt;
 
+import io.github.rainhawkgames.raintnt.dispenser.*;
+import net.minecraft.world.level.block.DispenserBlock;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -104,6 +106,30 @@ public class RainsTNT {
         LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
 
         Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
+
+        event.enqueueWork(() -> {
+            DispenserBlock.registerBehavior(
+                    ModRegistry.CONCUSSION_TNT_BLOCK.get().asItem(),
+                    new DispenseConcussionTNT()
+            );
+            DispenserBlock.registerBehavior(
+                    ModRegistry.HE_TNT_BLOCK.get().asItem(),
+                    new DispenseHETNT()
+            );
+            DispenserBlock.registerBehavior(
+                    ModRegistry.EXPLOSIVE_ARROW_ITEM.get().asItem(),
+                    new DispenseExplosiveArrow()
+            );
+            DispenserBlock.registerBehavior(
+                    ModRegistry.HIGH_EXPLOSIVE_ARROW_ITEM.get().asItem(),
+                    new DispenseHighExplosiveArrow()
+            );
+            DispenserBlock.registerBehavior(
+                    ModRegistry.CONCUSSION_ARROW_ITEM.get().asItem(),
+                    new DispenseConcussionArrow()
+            );
+        });
+
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
